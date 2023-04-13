@@ -18,6 +18,19 @@ db.init_app(app)
 
 api = Api(app)
 
+@app.before_request
+def is_Logged_in():
+    ok_list = [
+        'clear',
+        'article_list',
+        'show_article',
+        'login',
+        'logout',
+        'check_session'
+    ]
+    if not session.get('user_id') and request.endpoint not in ok_list:
+        return {'message': 'Please login first'}, 401
+
 class ClearSession(Resource):
 
     def delete(self):
@@ -87,12 +100,14 @@ class CheckSession(Resource):
 class MemberOnlyIndex(Resource):
     
     def get(self):
-        pass
+        member_only_articles = [ article.to_dict() for article in Article.query.filter(Article.is_member_only==True).all()]
+        return member_only_articles, 200
 
 class MemberOnlyArticle(Resource):
     
     def get(self, id):
-        pass
+        member_only_article = Article.query.filter(Article.id == id).first()
+        return member_only_article.to_dict(), 200
 
 api.add_resource(ClearSession, '/clear', endpoint='clear')
 api.add_resource(IndexArticle, '/articles', endpoint='article_list')
